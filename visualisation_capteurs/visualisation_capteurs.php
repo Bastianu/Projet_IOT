@@ -7,27 +7,62 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://www.chartjs.org/dist/2.9.3/Chart.min.js"></script>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
 <link rel="stylesheet" href="style/style.css"/>
 </head>
 
 
 <body>
-<ul>
+<!--<ul>
   <li><a class="active" href="">Données capteurs</a></li>
   <li><a href="ajout.php">Ajout capteur</a></li>
-</ul>
-
-	<div style="margin-left:20%;padding:1px ;width:75%;">
-		<canvas id="canvas"></canvas>
+</ul>-->
+	
+	
+	
+	
+	
+	<div class="columns is-gapless">
+		<div class="column is-1">
+		</div> 	
+		<div class="column is-6">
+		<div style="width:95%;">
+			<canvas id="canvas"></canvas>
+		</div>
+		Température maximale avant alerte : <input type="number" class="number" value=60 onchange="updateLimit(this,'T')"> °C
+		<div style="width:95%;">
+			<canvas id="canvas2"></canvas>
+		</div>
+		Humidité minimale avant alerte : <input type="number" class="number" value=5 onchange="updateLimit(this,'H')"> %
+		<div style="width:95%;">
+			<canvas id="canvas3"></canvas>
+		</div>
+		Vitesse du vent maximale avant alerte : <input type="number" class="number" value=80 onchange="updateLimit(this,'W')"> km/h
+		<br>
+		<br>
+		</div>
+		<div class="column is-2">
+			<div id="warningT" onclick="showAlertList()"></div> 
+			<div id="warningH" onclick="showAlertList()"></div> 
+			<div id="warningW" onclick="showAlertList()"></div> 
+		</div>
+		<div class="column is-2">
+			<button id="clearAlertList" onclick="clearList()" style="display:none;"> effacer </button>
+			<table class="table is-narrow" id="alertList" style="display:none;">
+				<thead>
+					<tr>
+						<td> capteur </td>
+						<td> alerte </td>
+						<td> heure </td>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
 	</div>
-	<div style="margin-left:20%;padding:1px ;width:75%;">
-		<canvas id="canvas2"></canvas>
-	</div>
-	<div style="margin-left:20%;padding:1px ;width:75%;">
-		<canvas id="canvas3"></canvas>
-	</div>
-	<br>
-	<br>
 	<script>
 		
 		window.onload = function() {
@@ -45,6 +80,10 @@
 			window.myLine3 = new Chart(ctx3, wind);					
 			
 		};
+		
+		var limitT = 60;
+		var limitH = 5;
+		var limitW = 80;
 		
 		var averageT = 20;
 		var averageH = 35;
@@ -334,10 +373,11 @@
 			xmlhttp.open("GET","DB_calls.php?action=update",true);
 			xmlhttp.send();
 				
-		}, 10000);		
+		}, 5000);		
 		
 		function updateData(mesures_capteurs){
 			for(var i=0;i<nbCapteurs["T"];i++){
+			checkValue(mesures_capteurs["T"][i][1][1], "T", i);
 			temperature.data.datasets[i].data.push({
 						x: newDate(date+5), 
 						y: parseInt(mesures_capteurs["T"][i][1][1]) +getRandomInt(3)
@@ -346,6 +386,7 @@
 			}
 			
 			for(var i=0;i<nbCapteurs["H"];i++){
+			checkValue(mesures_capteurs["H"][i][1][1], "H", i);
 			humidity.data.datasets[i].data.push({
 						x: newDate(date+5), 
 						y: parseInt(mesures_capteurs["H"][i][1][1]) +getRandomInt(5)
@@ -354,6 +395,7 @@
 			}		
 				
 			for(var i=0;i<nbCapteurs["W"];i++){
+			checkValue(mesures_capteurs["W"][i][1][1], "W", i);
 			wind.data.datasets[i].data.push({
 						x: newDate(date+5), 
 						y: parseInt(mesures_capteurs["W"][i][1][1]) +getRandomInt(8)
@@ -365,6 +407,81 @@
 					window.myLine.update();
 					window.myLine2.update();
 					window.myLine3.update();
+		}
+		
+		function updateLimit(input, dataType){
+			switch (dataType) {
+			  case "T":
+				limitT = input.value;
+				console.log("new T limit :"+limitT);
+				//input.value = null;
+				break;
+			  case "H":
+				limitH = input.value;
+				console.log("new H limit :"+limitH);
+				//input.value = null;
+				break;
+			  case "W":
+				limitW = input.value;
+				console.log("new W limit :"+limitW);
+				// input.value = null;
+				break;
+			  default:
+				break;
+			}
+		}
+		
+		function checkValue(value, dataType, numCapteur){
+			var table = document.getElementById('alertList').getElementsByTagName('tbody')[0];
+			var newRow = table.insertRow(table.rows.length);
+			var now = moment();
+			var time = now.hour() + ':' + now.minutes() + ':' + now.seconds();
+			switch (dataType) {
+			  case "T":
+				if(value >= limitT){
+					document.getElementById("warningT").style.display = "block";
+					document.getElementById("warningT").innerHTML = "ALERTE : TEMPERATURE ELEVEE ("+value+">"+limitT+")";
+					newRow.innerHTML = "<td>"+(numCapteur+1)+"</td><td> T : "+value+" °C</td><td>"+time+"</td>";
+				}
+				else if(value < limitT) document.getElementById("warningT").innerHTML = "Temperature OK";
+				break;
+			  case "H":
+				if(value <= limitH){
+					document.getElementById("warningH").style.display = "block";
+					document.getElementById("warningH").innerHTML = "ALERTE : HUMIDITE FAIBLE ("+value+"<"+limitH+")";
+					newRow.innerHTML = "<td>"+(numCapteur+1)+"</td><td> H : "+value+" %</td><td>"+time+"</td>";
+				}
+				else if(value > limitH) document.getElementById("warningH").innerHTML = "Humidité OK";
+				break;
+			  case "W":
+				if(value >= limitW){
+					document.getElementById("warningW").style.display = "block";
+					document.getElementById("warningW").innerHTML = "ALERTE : VENT FORT ("+value+">"+limitW+")";
+					newRow.innerHTML = "<td>"+(numCapteur+1)+"</td><td> W : "+value+" km/h</td><td>"+time+"</td>";
+				}
+				else if(value < limitW) document.getElementById("warningW").innerHTML = "Vitesse vent OK";
+				break;
+			  default:
+				break;
+			}
+		}
+		
+		function showAlertList(){
+	
+			var div = document.getElementById("alertList");
+			var button = document.getElementById("clearAlertList");
+			
+			div.style.display = button.style.display = (div.style.display == "block") ? "none" : "block";
+		}
+		
+		function clearList(){
+			var tableHeaderRowCount = 1;
+			var table = document.getElementById('alertList');
+			var rowCount = table.rows.length;
+			for (var i = tableHeaderRowCount; i < rowCount; i++) {
+				table.deleteRow(tableHeaderRowCount);
+			}
+			console.log("cleared");
 		}
 	</script>
 </body>
