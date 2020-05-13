@@ -27,29 +27,36 @@
 	<div class="columns is-gapless">
 		<div class="column is-1">
 		</div> 	
-		<div class="column is-6">
+		<div class="column is-">
 		<div style="width:95%;">
 			<canvas id="canvas"></canvas>
 		</div>
-		Température maximale avant alerte : <input type="number" class="number" value=60 onchange="updateLimit(this,'T')"> °C
+		Température maximale avant alerte :<input type="number" class="number" min=-20 max=1000 value=60 onchange="updateLimit(this,'T')"> °C 
 		<div style="width:95%;">
 			<canvas id="canvas2"></canvas>
 		</div>
-		Humidité minimale avant alerte : <input type="number" class="number" value=5 onchange="updateLimit(this,'H')"> %
+		Humidité minimale avant alerte : <input type="number" class="number" value=5 min=0 max=99 onchange="updateLimit(this,'H')"> %
 		<div style="width:95%;">
 			<canvas id="canvas3"></canvas>
 		</div>
-		Vitesse du vent maximale avant alerte : <input type="number" class="number" value=80 onchange="updateLimit(this,'W')"> km/h
+		Vitesse du vent maximale avant alerte : <input type="number" class="number" value=80 min=0 max=150 onchange="updateLimit(this,'W')"> km/h
 		<br>
 		<br>
 		</div>
 		<div class="column is-2">
-			<div id="warningT" onclick="showAlertList()"></div> 
-			<div id="warningH" onclick="showAlertList()"></div> 
-			<div id="warningW" onclick="showAlertList()"></div> 
+			<table class="table">
+			<tr><th><span id="warningT" onclick="showAlertList()"></span> <br> </th> </tr>
+			<tr><th><span id="warningH" onclick="showAlertList()"></span> <br> </th> </tr>
+			<tr><th><span id="warningW" onclick="showAlertList()"></span> </th> </tr>
+			</tr>
+			</table>
 		</div>
 		<div class="column is-2">
-			<button id="clearAlertList" onclick="clearList()" style="display:none;"> effacer </button>
+			<button id="clearAlertList" class="button is-primary is-outlined" onclick="clearList()" style="display:none;"> 
+				<span>Effacer</span>
+				<span class="icon is-small">
+					<i class="fas fa-times"></i>
+				</span> </button>
 			<table class="table is-narrow" id="alertList" style="display:none;">
 				<thead>
 					<tr>
@@ -380,7 +387,7 @@
 			checkValue(mesures_capteurs["T"][i][1][1], "T", i);
 			temperature.data.datasets[i].data.push({
 						x: newDate(date+5), 
-						y: parseInt(mesures_capteurs["T"][i][1][1]) +getRandomInt(3)
+						y: parseInt(mesures_capteurs["T"][i][1][1]) +getRandomInt(2)
 					});
 					if(temperature.data.datasets[i].data.length > 13) temperature.data.datasets[i].data.shift();
 			}
@@ -441,25 +448,37 @@
 				if(value >= limitT){
 					document.getElementById("warningT").style.display = "block";
 					document.getElementById("warningT").innerHTML = "ALERTE : TEMPERATURE ELEVEE ("+value+">"+limitT+")";
-					newRow.innerHTML = "<td>"+(numCapteur+1)+"</td><td> T : "+value+" °C</td><td>"+time+"</td>";
+					document.getElementById("warningT").className = "has-text-danger";
+					newRow.innerHTML = "<td> T-"+(numCapteur+1)+"</td><td>"+value+" °C</td><td>"+time+"</td>";
 				}
-				else if(value < limitT) document.getElementById("warningT").innerHTML = "Temperature OK";
+				else if(value < limitT) {
+					document.getElementById("warningT").innerHTML = "Temperature OK";
+					document.getElementById("warningT").className = "has-text-success";
+				}
 				break;
 			  case "H":
 				if(value <= limitH){
 					document.getElementById("warningH").style.display = "block";
 					document.getElementById("warningH").innerHTML = "ALERTE : HUMIDITE FAIBLE ("+value+"<"+limitH+")";
-					newRow.innerHTML = "<td>"+(numCapteur+1)+"</td><td> H : "+value+" %</td><td>"+time+"</td>";
+					document.getElementById("warningH").className = "has-text-danger";
+					newRow.innerHTML = "<td> H-"+(numCapteur+1)+"</td><td>"+value+" %</td><td>"+time+"</td>";
 				}
-				else if(value > limitH) document.getElementById("warningH").innerHTML = "Humidité OK";
+				else if(value > limitH) {
+					document.getElementById("warningH").innerHTML = "Humidité OK";
+					document.getElementById("warningH").className = "has-text-success";
+				}
 				break;
 			  case "W":
 				if(value >= limitW){
 					document.getElementById("warningW").style.display = "block";
 					document.getElementById("warningW").innerHTML = "ALERTE : VENT FORT ("+value+">"+limitW+")";
-					newRow.innerHTML = "<td>"+(numCapteur+1)+"</td><td> W : "+value+" km/h</td><td>"+time+"</td>";
+					document.getElementById("warningW").className = "has-text-danger";
+					newRow.innerHTML = "<td> W-"+(numCapteur+1)+"</td><td>"+value+" km/h</td><td>"+time+"</td>";
 				}
-				else if(value < limitW) document.getElementById("warningW").innerHTML = "Vitesse vent OK";
+				else if(value < limitW) {
+					document.getElementById("warningW").innerHTML = "Vitesse vent OK";
+					document.getElementById("warningW").className = "has-text-success";
+				}
 				break;
 			  default:
 				break;
